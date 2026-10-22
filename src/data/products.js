@@ -1,0 +1,25 @@
+// Productos demostrativos. Se pueden editar desde la interfaz.
+export const initialProducts = [
+  { id: '1', name: 'Leche entera 1 L', sku: 'LAC-001', category: 'Lácteos', price: 1190, stock: 48, minStock: 10, supplier: 'Distribuidora Norte' },
+  { id: '2', name: 'Arroz grado 1 1 kg', sku: 'ABA-102', category: 'Abarrotes', price: 1790, stock: 32, minStock: 12, supplier: 'Alimentos del Sur' },
+  { id: '3', name: 'Aceite vegetal 900 ml', sku: 'ABA-103', category: 'Abarrotes', price: 2490, stock: 6, minStock: 10, supplier: 'Alimentos del Sur' },
+  { id: '4', name: 'Manzanas rojas 1 kg', sku: 'FRU-201', category: 'Frutas y verduras', price: 1690, stock: 28, minStock: 8, supplier: 'Huerta Central' },
+  { id: '5', name: 'Bebida cola 1,5 L', sku: 'BEB-301', category: 'Bebidas', price: 1990, stock: 52, minStock: 15, supplier: 'Bebidas del Valle' },
+  { id: '6', name: 'Detergente líquido 1 L', sku: 'LIM-401', category: 'Limpieza', price: 4590, stock: 9, minStock: 10, supplier: 'Aseo Hogar' },
+  { id: '7', name: 'Pan de molde integral', sku: 'PAN-501', category: 'Panadería', price: 2390, stock: 0, minStock: 8, supplier: 'Panadería El Trigal' },
+  { id: '8', name: 'Yogur natural 125 g', sku: 'LAC-002', category: 'Lácteos', price: 690, stock: 74, minStock: 20, supplier: 'Distribuidora Norte' },
+  { id: '9', name: 'Papas prefritas 1 kg', sku: 'CON-601', category: 'Congelados', price: 3790, stock: 18, minStock: 8, supplier: 'Frío Express' },
+  { id: '10', name: 'Azúcar blanca 1 kg', sku: 'ABA-104', category: 'Abarrotes', price: 1390, stock: 38, minStock: 10, supplier: 'Alimentos del Sur' },
+  { id: '11', name: 'Naranjas 1 kg', sku: 'FRU-202', category: 'Frutas y verduras', price: 1490, stock: 7, minStock: 12, supplier: 'Huerta Central' },
+  { id: '12', name: 'Agua mineral 1,5 L', sku: 'BEB-302', category: 'Bebidas', price: 890, stock: 90, minStock: 20, supplier: 'Bebidas del Valle' },
+];
+
+export const categories = [
+  'Abarrotes',
+  'Bebidas',
+  'Congelados',
+  'Frutas y verduras',
+  'Lácteos',
+  'Limpieza',
+  'Panadería',
+];
