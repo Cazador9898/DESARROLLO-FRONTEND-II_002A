@@ -86,7 +86,7 @@ export default function App() {
           <Route path="/articulos/nuevo" element={<NewArticle />} />
           <Route path="/articulos/listado" element={<ArticlesList />} />
           <Route path="/articulos/:id" element={<ArticleDetail />} />
-          <Route path="/carrito" element={<ShoppingCart />} />
+          <Route path="/carrito" element={<ShoppingCartPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
