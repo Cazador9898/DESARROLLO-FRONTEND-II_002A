@@ -1,0 +1,4 @@
+/* Tailwind CSS: framework oficial integrado mediante PostCSS. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

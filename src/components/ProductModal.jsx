@@ -1,13 +1,10 @@
 import { useEffect, useState } from 'react';
 import { PackagePlus, Save, X } from 'lucide-react';
-import { categories } from '../data/products.js';
-
-const emptyProduct = {
-  name: '', sku: '', category: 'Abarrotes', supplier: '', price: '', stock: '', minStock: '10',
-};
+import { categories, emptyProductForm } from '../data/products.js';
+import { createProductId, validateProduct } from '../utils/productValidation.js';
 
 export default function ProductModal({ product, products, onSave, onClose }) {
-  const [form, setForm] = useState(product ? { ...product } : { ...emptyProduct });
+  const [form, setForm] = useState(product ? { ...product } : { ...emptyProductForm });
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -20,43 +17,18 @@ export default function ProductModal({ product, products, onSave, onClose }) {
 
   function update(event) {
     const { name, value } = event.target;
-    setForm((previous) => ({ ...previous, [name]: value }));
-    if (error) setError('');
+    setForm((current) => ({ ...current, [name]: value }));
+    setError('');
   }
 
   function submit(event) {
     event.preventDefault();
-    const cleanSku = form.sku.trim().toUpperCase();
-    const name = form.name.trim();
-    const supplier = form.supplier.trim();
-    const price = Number(form.price);
-    const stock = Number(form.stock);
-    const minStock = Number(form.minStock);
-
-    if (!name || !cleanSku || !supplier) {
-      setError('Completa el nombre, SKU y proveedor del producto.');
+    const result = validateProduct(form, products, product?.id);
+    if (result.error) {
+      setError(result.error);
       return;
     }
-    if (products.some((item) => item.sku.toUpperCase() === cleanSku && item.id !== product?.id)) {
-      setError('Ya existe un producto con ese código SKU.');
-      return;
-    }
-    if (form.price === '' || !Number.isFinite(price) || price < 0
-      || form.stock === '' || !Number.isInteger(stock) || stock < 0
-      || form.minStock === '' || !Number.isInteger(minStock) || minStock < 0) {
-      setError('Ingresa un precio válido y cantidades enteras no negativas.');
-      return;
-    }
-    onSave({
-      ...form,
-      id: product?.id ?? globalThis.crypto?.randomUUID?.() ?? String(Date.now()),
-      name,
-      sku: cleanSku,
-      supplier,
-      price,
-      stock,
-      minStock,
-    });
+    onSave({ id: product?.id ?? createProductId(), ...result.product });
   }
 
   return (
@@ -72,6 +44,10 @@ export default function ProductModal({ product, products, onSave, onClose }) {
           <div className="form-row">
             <label className="form-field">Nombre del producto <input autoFocus name="name" value={form.name} onChange={update} placeholder="Ej. Harina 1 kg" maxLength="100" required /></label>
             <label className="form-field">Código SKU <input name="sku" value={form.sku} onChange={update} placeholder="Ej. ABA-105" maxLength="32" required /></label>
+          </div>
+          <div className="form-row">
+            <label className="form-field">Marca <input name="brand" value={form.brand} onChange={update} placeholder="Ej. Selecta" maxLength="80" required /></label>
+            <label className="form-field">Tipo de producto <input name="type" value={form.type} onChange={update} placeholder="Ej. Harina" maxLength="80" required /></label>
           </div>
           <div className="form-row">
             <label className="form-field">Categoría

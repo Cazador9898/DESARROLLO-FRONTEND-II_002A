@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useInventory } from '../context/InventoryContext.jsx';
 import {
   AlertCircle, ArrowDownToLine, ArrowRight, BadgeCheck, BarChart3, Box,
   Check, ChevronDown, CircleAlert, ClipboardList, Edit3, Minus,
@@ -7,7 +9,8 @@ import {
 } from 'lucide-react';
 import ProductModal from '../components/ProductModal.jsx';
 import { categories } from '../data/products.js';
-import { downloadCSV, formatCLP, getStatus, loadProducts, saveProducts } from '../utils/inventory.js';
+import { downloadCSV, formatCLP, getStatus } from '../utils/inventory.js';
+import { filterProducts } from '../utils/inventoryReducer.js';
 
 function StatCard({ icon: Icon, label, value, detail, color }) {
   return (
@@ -26,7 +29,7 @@ function StockBadge({ product }) {
 }
 
 export default function Dashboard() {
-  const [products, setProducts] = useState(loadProducts);
+  const { products, updateProduct, deleteProduct, adjustStock } = useInventory();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('Todas');
   const [status, setStatus] = useState('Todos');
@@ -35,7 +38,6 @@ export default function Dashboard() {
   const [toast, setToast] = useState('');
   const toastTimer = useRef(null);
 
-  useEffect(() => { saveProducts(products); }, [products]);
   useEffect(() => () => clearTimeout(toastTimer.current), []);
 
   function notify(message) {
@@ -53,40 +55,26 @@ export default function Dashboard() {
     return { units, worth, low, out, healthy, attention: low.length + out.length };
   }, [products]);
 
-  const filtered = useMemo(() => {
-    const query = search.trim().toLocaleLowerCase('es');
-    return products.filter((p) => {
-      const matchesQuery = [p.name, p.sku, p.supplier].some((v) => v.toLocaleLowerCase('es').includes(query));
-      const matchesCategory = category === 'Todas' || p.category === category;
-      const matchesStatus = status === 'Todos' || getStatus(p).type === status;
-      return matchesQuery && matchesCategory && matchesStatus;
-    });
-  }, [products, search, category, status]);
+  const filtered = useMemo(() => filterProducts(products, { search, category, status }), [products, search, category, status]);
 
-  function openCreate() { setEditing(null); setModalOpen(true); }
   function openEdit(product) { setEditing(product); setModalOpen(true); }
   function closeModal() { setModalOpen(false); setEditing(null); }
 
   function save(product) {
-    if (editing) {
-      setProducts((before) => before.map((p) => p.id === product.id ? product : p));
-      notify('Producto actualizado correctamente.');
-    } else {
-      setProducts((before) => [product, ...before]);
-      notify('Producto agregado al inventario.');
-    }
+    updateProduct(product);
+    notify('Producto actualizado correctamente.');
     closeModal();
   }
 
   function remove(product) {
-    if (!window.confirm(`¿Eliminar "${product.name}" del inventario? Esta acción no se puede deshacer.`)) return;
-    setProducts((before) => before.filter((p) => p.id !== product.id));
+    if (!window.confirm(`¿Eliminar "${product.name}" del inventario? Si está en el carrito, también se quitará de allí. Esta acción no se puede deshacer.`)) return;
+    deleteProduct(product.id);
     notify('Producto eliminado del inventario.');
   }
 
   function changeStock(product, delta) {
     if (delta < 0 && product.stock === 0) return;
-    setProducts((before) => before.map((p) => p.id === product.id ? { ...p, stock: Math.max(0, p.stock + delta) } : p));
+    adjustStock(product.id, delta);
     notify(`Stock de ${product.name} actualizado.`);
   }
 
@@ -107,7 +95,7 @@ export default function Dashboard() {
           <span className="hero-kicker"><span className="kicker-point" /> TU INVENTARIO, BAJO CONTROL</span>
           <h1>Todo tu supermercado.<br /><em>En un solo lugar.</em></h1>
           <p>Organiza tus productos, supervisa existencias y toma mejores decisiones con getiomark.</p>
-          <button type="button" onClick={openCreate} className="button button-lime"><Plus size={18} strokeWidth={2.5} /> Agregar producto <ArrowRight size={17} /></button>
+          <Link to="/articulos/nuevo" className="button button-lime"><Plus size={18} strokeWidth={2.5} /> Agregar producto <ArrowRight size={17} /></Link>
         </div>
         <div className="hero-widget" aria-label={`${percentHealthy}% de productos con stock suficiente`}>
           <div className="hero-widget-top"><span><BarChart3 size={17} /> Salud del inventario</span><span className="widget-live"><i /> ACTUALIZADO</span></div>
@@ -129,10 +117,10 @@ export default function Dashboard() {
       <section className="inventory-section" aria-labelledby="inventory-title">
         <div className="inventory-topline">
           <div><span className="section-kicker">CATÁLOGO DE PRODUCTOS</span><h2 id="inventory-title">Tu inventario <span className="count-tag">{products.length}</span></h2><p>Gestiona tus productos y mantén tus existencias al día.</p></div>
-          <div className="toolbar-actions"><button className="button button-outline" onClick={exportInventory} type="button"><ArrowDownToLine size={17} /> Exportar CSV</button><button className="button button-primary" onClick={openCreate} type="button"><Plus size={18} /> Nuevo producto</button></div>
+          <div className="toolbar-actions"><button className="button button-outline" onClick={exportInventory} type="button"><ArrowDownToLine size={17} /> Exportar CSV</button><Link className="button button-primary" to="/articulos/nuevo"><Plus size={18} /> Nuevo producto</Link></div>
         </div>
         <div className="filter-toolbar">
-          <label className="search-box"><Search size={18} aria-hidden="true" /><span className="sr-only">Buscar productos</span><input type="search" placeholder="Buscar por producto, SKU o proveedor..." value={search} onChange={(event) => setSearch(event.target.value)} /></label>
+          <label className="search-box"><Search size={18} aria-hidden="true" /><span className="sr-only">Buscar productos</span><input type="search" placeholder="Buscar nombre, SKU, marca o tipo..." value={search} onChange={(event) => setSearch(event.target.value)} /></label>
           <div className="select-box"><SlidersHorizontal size={17} aria-hidden="true" /><label className="sr-only" htmlFor="category-select">Filtrar por categoría</label><select id="category-select" value={category} onChange={(event) => setCategory(event.target.value)}><option value="Todas">Todas las categorías</option>{categories.map((cat) => <option key={cat}>{cat}</option>)}</select><ChevronDown size={15} className="select-arrow" /></div>
           <div className="select-box status-select"><label className="sr-only" htmlFor="status-select">Filtrar por estado</label><select id="status-select" value={status} onChange={(event) => setStatus(event.target.value)}><option value="Todos">Todos los estados</option><option value="ok">Disponible</option><option value="low">Stock bajo</option><option value="out">Sin stock</option></select><ChevronDown size={15} className="select-arrow" /></div>
         </div>
@@ -141,7 +129,7 @@ export default function Dashboard() {
             <tbody>
               {filtered.map((p) => (
                 <tr key={p.id}>
-                  <td><div className="product-cell"><span className="product-avatar"><Box size={20} /></span><span><strong>{p.name}</strong><small>{p.sku} <span className="dot-sep">·</span> {p.supplier}</small></span></div></td>
+                  <td><div className="product-cell"><span className="product-avatar"><Box size={20} /></span><span><Link to={`/articulos/${encodeURIComponent(p.id)}`} className="font-extrabold text-slate-800 hover:text-emerald-700 hover:underline">{p.name}</Link><small>{p.sku} <span className="dot-sep">·</span> {p.brand} <span className="dot-sep">·</span> {p.type}</small></span></div></td>
                   <td><span className="category-chip">{p.category}</span></td>
                   <td className="money-cell">{formatCLP(p.price)}</td>
                   <td><div className="stock-adjust"><button type="button" title={`Restar una unidad a ${p.name}`} aria-label={`Restar una unidad a ${p.name}`} onClick={() => changeStock(p, -1)} disabled={p.stock === 0}><Minus size={14} /></button><strong>{p.stock}</strong><button type="button" title={`Sumar una unidad a ${p.name}`} aria-label={`Sumar una unidad a ${p.name}`} onClick={() => changeStock(p, 1)}><Plus size={14} /></button></div></td>
