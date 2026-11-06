@@ -6,7 +6,7 @@ import Contact from './pages/Contact.jsx';
 import NewArticle from './pages/NewArticle.jsx';
 import ArticlesList from './pages/ArticlesList.jsx';
 import ArticleDetail from './pages/ArticleDetail.jsx';
-import ShoppingCart from './pages/ShoppingCart.jsx';
+import ShoppingCartPage from './pages/ShoppingCart.jsx';
 import { useInventory } from './context/InventoryContext.jsx';
 
 const navigation = [
